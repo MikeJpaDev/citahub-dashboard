@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,25 +8,53 @@ import { ClaimsChart } from "@/components/dashboard/ClaimsChart";
 import { ServicesPieChart } from "@/components/dashboard/ServicesPieChart";
 import { WeeklyChart } from "@/components/dashboard/WeeklyChart";
 import { ServicesLineChart } from "@/components/dashboard/ServicesLineChart";
-import { MonthFilter } from "@/components/dashboard/MonthFilter";
+import { ServicesByDayChart } from "@/components/dashboard/ServicesByDayChart";
+import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
+import { SearchFilter } from "@/components/dashboard/SearchFilter";
 import { ClaimsTable } from "@/components/dashboard/ClaimsTable";
 import { DocumentsCRUD } from "@/components/dashboard/DocumentsCRUD";
+import { ExportPDFButton } from "@/components/dashboard/ExportPDFButton";
 import { Skeleton } from "@/components/ui/skeleton";
-import { parseISO, format } from "date-fns";
+import { parseISO, isWithinInterval } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 const Index = () => {
   const { data: claims, isLoading, error, refetch, isFetching } = useClaims();
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredClaims = useMemo(() => {
     if (!claims) return [];
-    if (selectedMonth === "all") return claims;
     
-    return claims.filter((claim) => {
-      const claimMonth = format(parseISO(claim.fecha_cita), "yyyy-MM");
-      return claimMonth === selectedMonth;
-    });
-  }, [claims, selectedMonth]);
+    let filtered = claims;
+
+    // Filter by date range
+    if (dateRange?.from) {
+      filtered = filtered.filter((claim) => {
+        const claimDate = parseISO(claim.fecha_cita);
+        if (dateRange.to) {
+          return isWithinInterval(claimDate, {
+            start: dateRange.from!,
+            end: dateRange.to,
+          });
+        }
+        return claimDate >= dateRange.from!;
+      });
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(
+        (claim) =>
+          claim.nombre_titular.toLowerCase().includes(query) ||
+          claim.email.toLowerCase().includes(query) ||
+          claim.telefono.includes(query)
+      );
+    }
+
+    return filtered;
+  }, [claims, dateRange, searchQuery]);
 
   if (error) {
     return (
@@ -70,20 +98,28 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 space-y-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <TabsList className="bg-card border">
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="citas">Todas las Citas</TabsTrigger>
-              <TabsTrigger value="documentos">Documentos</TabsTrigger>
-            </TabsList>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <TabsList className="bg-card border">
+                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="citas">Todas las Citas</TabsTrigger>
+                <TabsTrigger value="documentos">Documentos</TabsTrigger>
+              </TabsList>
+            </div>
 
-            {claims && claims.length > 0 && (
-              <MonthFilter
-                claims={claims}
-                selectedMonth={selectedMonth}
-                onMonthChange={setSelectedMonth}
+            {/* Filters Row */}
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4 p-4 bg-card rounded-lg border">
+              <SearchFilter value={searchQuery} onChange={setSearchQuery} />
+              <DateRangeFilter
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
               />
-            )}
+              {filteredClaims.length > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {filteredClaims.length} cita(s) encontrada(s)
+                </span>
+              )}
+            </div>
           </div>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -102,23 +138,36 @@ const Index = () => {
               </div>
             ) : filteredClaims.length > 0 ? (
               <>
-                <StatsCards claims={filteredClaims} />
-                
-                {/* Row 1: Bar charts */}
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <ClaimsChart claims={filteredClaims} />
-                  <WeeklyChart claims={filteredClaims} />
+                <div className="flex justify-end">
+                  <ExportPDFButton
+                    targetId="dashboard-charts"
+                    fileName="dashboard-citas"
+                    label="Exportar Gráficas a PDF"
+                  />
                 </div>
 
-                {/* Row 2: Pie chart and services evolution */}
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <ServicesPieChart claims={filteredClaims} />
-                  <ServicesLineChart claims={filteredClaims} />
+                <div id="dashboard-charts" className="space-y-6 bg-background p-4">
+                  <StatsCards claims={filteredClaims} />
+                  
+                  {/* Row 1: Bar charts */}
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <ClaimsChart claims={filteredClaims} />
+                    <WeeklyChart claims={filteredClaims} />
+                  </div>
+
+                  {/* Row 2: Services by day chart */}
+                  <ServicesByDayChart claims={filteredClaims} />
+
+                  {/* Row 3: Pie chart and services evolution */}
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <ServicesPieChart claims={filteredClaims} />
+                    <ServicesLineChart claims={filteredClaims} />
+                  </div>
                 </div>
               </>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
-                No hay datos para el período seleccionado
+                No hay datos para los filtros seleccionados
               </div>
             )}
           </TabsContent>
@@ -127,10 +176,21 @@ const Index = () => {
             {isLoading ? (
               <Skeleton className="h-[500px] rounded-lg" />
             ) : filteredClaims.length > 0 ? (
-              <ClaimsTable claims={filteredClaims} />
+              <div className="space-y-4">
+                <div className="flex justify-end">
+                  <ExportPDFButton
+                    targetId="claims-table"
+                    fileName="tabla-citas"
+                    label="Exportar Tabla a PDF"
+                  />
+                </div>
+                <div id="claims-table">
+                  <ClaimsTable claims={filteredClaims} />
+                </div>
+              </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
-                No hay citas para el período seleccionado
+                No hay citas para los filtros seleccionados
               </div>
             )}
           </TabsContent>
