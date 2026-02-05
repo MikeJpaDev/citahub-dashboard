@@ -12,7 +12,7 @@ import { ServicesByDayChart } from "@/components/dashboard/ServicesByDayChart";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { SearchFilter } from "@/components/dashboard/SearchFilter";
 import { ClaimsTable } from "@/components/dashboard/ClaimsTable";
-import { DocumentsCRUD } from "@/components/dashboard/DocumentsCRUD";
+import { GeminiDocumentsCRUD } from "@/components/dashboard/GeminiDocumentsCRUD";
 import { ExportPDFButton } from "@/components/dashboard/ExportPDFButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseISO, isWithinInterval } from "date-fns";
@@ -196,7 +196,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="documentos">
-            <DocumentsCRUD />
+            <GeminiDocumentsCRUD />
           </TabsContent>
         </Tabs>
       </main>
