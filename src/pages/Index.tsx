@@ -140,9 +140,9 @@ const Index = () => {
               <>
                 <div className="flex justify-end">
                   <ExportPDFButton
-                    targetId="dashboard-charts"
-                    fileName="dashboard-citas"
-                    label="Exportar Gráficas a PDF"
+                    claims={filteredClaims}
+                    fileName="citas"
+                    label="Exportar Citas a PDF"
                   />
                 </div>
 
@@ -176,17 +176,8 @@ const Index = () => {
             {isLoading ? (
               <Skeleton className="h-[500px] rounded-lg" />
             ) : filteredClaims.length > 0 ? (
-              <div className="space-y-4">
-                <div className="flex justify-end">
-                  <ExportPDFButton
-                    targetId="claims-table"
-                    fileName="tabla-citas"
-                    label="Exportar Tabla a PDF"
-                  />
-                </div>
-                <div id="claims-table">
-                  <ClaimsTable claims={filteredClaims} />
-                </div>
+              <div id="claims-table">
+                <ClaimsTable claims={filteredClaims} />
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
