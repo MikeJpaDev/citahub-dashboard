@@ -6,7 +6,7 @@ export interface GeminiDocument {
   name: string;
   displayName: string;
   uploadedAt: string;
-  state: string;
+  sizeBytes: number;
 }
 
 interface CustomMetadata {
@@ -17,7 +17,7 @@ interface CustomMetadata {
 interface GeminiDocumentResponse {
   name: string;
   customMetadata?: CustomMetadata[];
-  state?: string;
+  sizeBytes?: string;
 }
 
 // Step 1: Upload file binary to Gemini
@@ -113,7 +113,7 @@ export const listDocuments = async (): Promise<GeminiDocument[]> => {
       name: doc.name,
       displayName: nombreArchivo || "Sin nombre",
       uploadedAt: fechaSubida || "Fecha desconocida",
-      state: doc.state || "UNKNOWN",
+      sizeBytes: parseInt(doc.sizeBytes || "0", 10),
     };
   });
 };

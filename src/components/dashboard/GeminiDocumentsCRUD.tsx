@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,15 +52,10 @@ export const GeminiDocumentsCRUD = () => {
     }
   };
 
-  const getStateBadge = (state: string) => {
-    switch (state) {
-      case "ACTIVE":
-        return <Badge className="bg-success text-success-foreground">Activo</Badge>;
-      case "PROCESSING":
-        return <Badge variant="secondary">Procesando</Badge>;
-      default:
-        return <Badge variant="outline">{state}</Badge>;
-    }
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 MB";
+    const mb = bytes / (1024 * 1024);
+    return mb < 0.01 ? "< 0.01 MB" : `${mb.toFixed(2)} MB`;
   };
 
   if (error) {
@@ -136,7 +130,7 @@ export const GeminiDocumentsCRUD = () => {
                   <TableRow className="bg-muted/50">
                     <TableHead className="font-semibold">Nombre</TableHead>
                     <TableHead className="font-semibold">Fecha de Subida</TableHead>
-                    <TableHead className="font-semibold">Estado</TableHead>
+                    <TableHead className="font-semibold">Tamaño</TableHead>
                     <TableHead className="font-semibold text-right">
                       Acciones
                     </TableHead>
@@ -155,7 +149,7 @@ export const GeminiDocumentsCRUD = () => {
                         </div>
                       </TableCell>
                       <TableCell>{doc.uploadedAt}</TableCell>
-                      <TableCell>{getStateBadge(doc.state)}</TableCell>
+                      <TableCell>{formatFileSize(doc.sizeBytes)}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="icon"
