@@ -138,7 +138,14 @@ const Index = () => {
               </div>
             ) : filteredClaims.length > 0 ? (
               <>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  <ExportPDFButton
+                    claims={filteredClaims}
+                    fileName="graficas"
+                    label="Exportar Gráficas a PDF"
+                    mode="charts"
+                    chartsContainerId="dashboard-charts"
+                  />
                   <ExportPDFButton
                     claims={filteredClaims}
                     fileName="citas"
@@ -176,7 +183,14 @@ const Index = () => {
             {isLoading ? (
               <Skeleton className="h-[500px] rounded-lg" />
             ) : filteredClaims.length > 0 ? (
-              <div id="claims-table">
+              <div id="claims-table" className="space-y-4">
+                <div className="flex justify-end">
+                  <ExportPDFButton
+                    claims={filteredClaims}
+                    fileName="citas"
+                    label="Exportar Citas a PDF"
+                  />
+                </div>
                 <ClaimsTable claims={filteredClaims} />
               </div>
             ) : (
