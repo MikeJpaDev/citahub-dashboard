@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,7 @@ import { GeminiDocumentsCRUD } from "@/components/dashboard/GeminiDocumentsCRUD"
 import { ExportPDFButton } from "@/components/dashboard/ExportPDFButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseISO, isWithinInterval } from "date-fns";
+import { toast } from "sonner";
 import type { DateRange } from "react-day-picker";
 
 const Index = () => {
@@ -56,16 +57,11 @@ const Index = () => {
     return filtered;
   }, [claims, dateRange, searchQuery]);
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-destructive text-lg">Error al cargar los datos</p>
-          <Button onClick={() => refetch()}>Reintentar</Button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (error && !claims) {
+      toast.error("Error al cargar los datos. Se reintentará automáticamente.");
+    }
+  }, [error, claims]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -136,66 +132,59 @@ const Index = () => {
                 </div>
                 <Skeleton className="h-[400px] rounded-lg" />
               </div>
-            ) : filteredClaims.length > 0 ? (
+            ) : (
               <>
-                <div className="flex justify-end gap-2">
-                  <ExportPDFButton
-                    claims={filteredClaims}
-                    fileName="graficas"
-                    label="Exportar Gráficas a PDF"
-                    mode="charts"
-                    chartsContainerId="dashboard-charts"
-                  />
-                  <ExportPDFButton
-                    claims={filteredClaims}
-                    fileName="citas"
-                    label="Exportar Citas a PDF"
-                  />
-                </div>
+                {filteredClaims.length > 0 && (
+                  <div className="flex justify-end gap-2">
+                    <ExportPDFButton
+                      claims={filteredClaims}
+                      fileName="graficas"
+                      label="Exportar Gráficas a PDF"
+                      mode="charts"
+                      chartsContainerId="dashboard-charts"
+                    />
+                    <ExportPDFButton
+                      claims={filteredClaims}
+                      fileName="citas"
+                      label="Exportar Citas a PDF"
+                    />
+                  </div>
+                )}
 
                 <div id="dashboard-charts" className="space-y-6 bg-background p-4">
                   <StatsCards claims={filteredClaims} />
                   
-                  {/* Row 1: Bar charts */}
                   <div className="grid gap-6 lg:grid-cols-2">
                     <ClaimsChart claims={filteredClaims} />
                     <WeeklyChart claims={filteredClaims} />
                   </div>
 
-                  {/* Row 2: Services by day chart */}
                   <ServicesByDayChart claims={filteredClaims} />
 
-                  {/* Row 3: Pie chart and services evolution */}
                   <div className="grid gap-6 lg:grid-cols-2">
                     <ServicesPieChart claims={filteredClaims} />
                     <ServicesLineChart claims={filteredClaims} />
                   </div>
                 </div>
               </>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                No hay datos para los filtros seleccionados
-              </div>
             )}
           </TabsContent>
 
           <TabsContent value="citas">
             {isLoading ? (
               <Skeleton className="h-[500px] rounded-lg" />
-            ) : filteredClaims.length > 0 ? (
-              <div id="claims-table" className="space-y-4">
-                <div className="flex justify-end">
-                  <ExportPDFButton
-                    claims={filteredClaims}
-                    fileName="citas"
-                    label="Exportar Citas a PDF"
-                  />
-                </div>
-                <ClaimsTable claims={filteredClaims} />
-              </div>
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                No hay citas para los filtros seleccionados
+              <div id="claims-table" className="space-y-4">
+                {filteredClaims.length > 0 && (
+                  <div className="flex justify-end">
+                    <ExportPDFButton
+                      claims={filteredClaims}
+                      fileName="citas"
+                      label="Exportar Citas a PDF"
+                    />
+                  </div>
+                )}
+                <ClaimsTable claims={filteredClaims} />
               </div>
             )}
           </TabsContent>
