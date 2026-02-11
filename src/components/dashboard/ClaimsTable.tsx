@@ -80,52 +80,60 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentClaims.map((claim) => (
-                  <TableRow key={claim.id} className="hover:bg-muted/30 transition-colors">
-                    <TableCell className="font-medium">{claim.id}</TableCell>
-                    <TableCell>{claim.nombre_titular}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="font-normal">
-                        {claim.servicio}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(claim.fecha_cita).toLocaleDateString("es-ES")}
-                    </TableCell>
-                    <TableCell>{claim.hora_franja}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {claim.email}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {claim.telefono}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedClaim(claim)}
-                          title="Ver detalles"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleResendEmail(claim)}
-                          disabled={resendingId === claim.id}
-                          title="Reenviar correo"
-                        >
-                          {resendingId === claim.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Mail className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
+                {currentClaims.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      No hay citas registradas
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  currentClaims.map((claim) => (
+                    <TableRow key={claim.id} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium">{claim.id}</TableCell>
+                      <TableCell>{claim.nombre_titular}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="font-normal">
+                          {claim.servicio}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(claim.fecha_cita).toLocaleDateString("es-ES")}
+                      </TableCell>
+                      <TableCell>{claim.hora_franja}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {claim.email}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {claim.telefono}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedClaim(claim)}
+                            title="Ver detalles"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleResendEmail(claim)}
+                            disabled={resendingId === claim.id}
+                            title="Reenviar correo"
+                          >
+                            {resendingId === claim.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Mail className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
