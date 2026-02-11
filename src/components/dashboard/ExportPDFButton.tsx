@@ -26,6 +26,7 @@ import { es } from "date-fns/locale";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type { Claim } from "@/types/claim";
 
 type ExportMode = "day" | "month" | "charts";
@@ -73,7 +74,7 @@ export const ExportPDFButton = ({
     try {
       const chartsContainer = document.getElementById(chartsContainerId);
       if (!chartsContainer) {
-        alert("No se encontraron las gráficas para exportar");
+        toast.error("No se encontraron las gráficas para exportar");
         setIsExporting(false);
         return;
       }
@@ -158,7 +159,7 @@ export const ExportPDFButton = ({
       const filteredClaims = getFilteredClaims();
 
       if (filteredClaims.length === 0) {
-        alert(exportMode === "day" 
+        toast.error(exportMode === "day" 
           ? "No hay citas para la fecha seleccionada" 
           : "No hay citas para el mes seleccionado"
         );
