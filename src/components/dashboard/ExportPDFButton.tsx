@@ -139,9 +139,11 @@ export const ExportPDFButton = ({
 
       const dateStr = format(new Date(), "yyyy-MM-dd");
       pdf.save(`graficas-dashboard-${dateStr}.pdf`);
+      toast.success("Gráficas exportadas a PDF correctamente");
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error exporting charts PDF:", error);
+      toast.error("Error al exportar las gráficas a PDF");
     } finally {
       setIsExporting(false);
     }
@@ -336,9 +338,11 @@ export const ExportPDFButton = ({
         ? format(selectedDate, "yyyy-MM-dd")
         : format(selectedDate, "yyyy-MM");
       pdf.save(`${fileName}-${dateStr}.pdf`);
+      toast.success("PDF exportado correctamente");
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error exporting PDF:", error);
+      toast.error("Error al exportar el PDF");
     } finally {
       setIsExporting(false);
     }
