@@ -1,6 +1,6 @@
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const FILE_SEARCH_STORE_ID = process.env.FILE_SEARCH_STORE_ID;
-const BASE_URL = process.env.BASE_URL;
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY ?? "";
+const FILE_SEARCH_STORE_ID = import.meta.env.VITE_FILE_SEARCH_STORE_ID ;
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export interface GeminiDocument {
   name: string;
@@ -24,6 +24,7 @@ interface GeminiDocumentResponse {
 export const uploadFileToGemini = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append("file", file);
+  console.log("Uploading file to Gemini:", file.name, file.size, file.type);
 
   const response = await fetch(
     `${BASE_URL}/upload/v1beta/files?key=${GEMINI_API_KEY}`,
