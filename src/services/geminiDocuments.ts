@@ -1,6 +1,6 @@
-const GEMINI_API_KEY = "AIzaSyAdghVSBqAoVec0YHu21K2QZ-Eri-5nvfc";
-const FILE_SEARCH_STORE_ID = "fileSearchStores/bbdd-wqe6r41m1ihz";
-const BASE_URL = "https://generativelanguage.googleapis.com";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const FILE_SEARCH_STORE_ID = process.env.FILE_SEARCH_STORE_ID;
+const BASE_URL = process.env.BASE_URL;
 
 export interface GeminiDocument {
   name: string;

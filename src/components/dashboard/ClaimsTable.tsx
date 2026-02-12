@@ -42,9 +42,10 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
   };
 
   const handleResendEmail = async (claim: Claim) => {
+    const BASE_URL_GUAJIRITOS = process.env.BASE_URL_GUAJIRITOS;
     setResendingId(claim.id);
     try {
-      const response = await fetch("https://n8n.guajiritos.com/webhook/claim/report", {
+      const response = await fetch(BASE_URL_GUAJIRITOS + "/claim/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: String(claim.id) }),

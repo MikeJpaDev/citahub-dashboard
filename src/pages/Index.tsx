@@ -72,7 +72,7 @@ const Index = () => {
             <div>
               <div className="flex gap-2 items-center">
                 <img src="/logo.png" alt="" width={50} height={50}/>
-                <h1 className="font-bold">Panel de administración - CLAIM S.A.</h1>
+                <h1 className="font-bold text-xl">Panel de administración - CLAIM S.A.</h1>
               </div>
             </div>
             <Button
