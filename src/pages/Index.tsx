@@ -71,8 +71,8 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex gap-2 items-center">
-                <img src="/public/logo.png" alt="" width={50} height={30}/>
-                <h1 className="text-xl font-bold">Panel de administración - CLAIM S.A.</h1>
+                <img src="/logo.png" alt="" width={50} height={50}/>
+                <h1 className="font-bold">Panel de administración - CLAIM S.A.</h1>
               </div>
             </div>
             <Button
