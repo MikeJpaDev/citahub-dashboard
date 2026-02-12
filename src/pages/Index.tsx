@@ -70,10 +70,10 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Dashboard de Citas</h1>
-              <p className="text-sm text-primary-foreground/80">
-                Panel de administración - CLAIM S.A.
-              </p>
+              <div className="flex gap-2 items-center">
+                <img src="/public/logo.png" alt="" width={50} height={30}/>
+                <h1 className="text-xl font-bold">Panel de administración - CLAIM S.A.</h1>
+              </div>
             </div>
             <Button
               variant="secondary"

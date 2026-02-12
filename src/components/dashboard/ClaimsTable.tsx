@@ -97,7 +97,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(claim.fecha_cita).toLocaleDateString("es-ES")}
+                        {new Date(claim.fecha_cita).toLocaleDateString("es-ES", { timeZone: "UTC" })}
                       </TableCell>
                       <TableCell>{claim.hora_franja}</TableCell>
                       <TableCell className="text-muted-foreground">
@@ -204,7 +204,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
               <DetailRow label="ID" value={String(selectedClaim.id)} />
               <DetailRow label="Titular" value={selectedClaim.nombre_titular} />
               <DetailRow label="Servicio" value={selectedClaim.servicio} />
-              <DetailRow label="Fecha de Cita" value={new Date(selectedClaim.fecha_cita).toLocaleDateString("es-ES")} />
+              <DetailRow label="Fecha de Cita" value={new Date(selectedClaim.fecha_cita).toLocaleDateString("es-ES",{ timeZone: "UTC" })} />
               <DetailRow label="Hora / Franja" value={selectedClaim.hora_franja} />
               <DetailRow label="Email" value={selectedClaim.email} />
               <DetailRow label="Teléfono" value={selectedClaim.telefono} />
