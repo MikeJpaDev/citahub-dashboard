@@ -13,6 +13,7 @@ import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { SearchFilter } from "@/components/dashboard/SearchFilter";
 import { ClaimsTable } from "@/components/dashboard/ClaimsTable";
 import { GeminiDocumentsCRUD } from "@/components/dashboard/GeminiDocumentsCRUD";
+import { ConfiguracionPanel } from "@/components/dashboard/ConfiguracionPanel";
 import { ExportPDFButton } from "@/components/dashboard/ExportPDFButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseISO, isWithinInterval } from "date-fns";
@@ -26,7 +27,7 @@ const Index = () => {
 
   const filteredClaims = useMemo(() => {
     if (!claims) return [];
-    
+
     let filtered = claims;
 
     // Filter by date range
@@ -48,9 +49,9 @@ const Index = () => {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
         (claim) =>
-      claim.nombre_titular.toLowerCase().includes(query) ||
+          claim.nombre_titular.toLowerCase().includes(query) ||
           claim.email.toLowerCase().includes(query) ||
-          String(claim.telefono).includes(query)
+          String(claim.telefono).includes(query),
       );
     }
 
@@ -71,8 +72,10 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex gap-2 items-center">
-                <img src="/logo.png" alt="" width={50} height={50}/>
-                <h1 className="font-bold text-xl">Panel de administración - CLAIM S.A.</h1>
+                <img src="/logo.png" alt="" width={50} height={50} />
+                <h1 className="font-bold text-xl">
+                  Panel de administración - CLAIM S.A.
+                </h1>
               </div>
             </div>
             <Button
@@ -100,6 +103,7 @@ const Index = () => {
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="citas">Todas las Citas</TabsTrigger>
                 <TabsTrigger value="documentos">Documentos</TabsTrigger>
+                <TabsTrigger value="configuracion">Configuración</TabsTrigger>
               </TabsList>
             </div>
 
@@ -151,9 +155,12 @@ const Index = () => {
                   </div>
                 )}
 
-                <div id="dashboard-charts" className="space-y-6 bg-background p-4">
+                <div
+                  id="dashboard-charts"
+                  className="space-y-6 bg-background p-4"
+                >
                   <StatsCards claims={filteredClaims} />
-                  
+
                   <div className="grid gap-6 lg:grid-cols-2">
                     <ClaimsChart claims={filteredClaims} />
                     <WeeklyChart claims={filteredClaims} />
@@ -191,6 +198,10 @@ const Index = () => {
 
           <TabsContent value="documentos">
             <GeminiDocumentsCRUD />
+          </TabsContent>
+
+          <TabsContent value="configuracion">
+            <ConfiguracionPanel />
           </TabsContent>
         </Tabs>
       </main>

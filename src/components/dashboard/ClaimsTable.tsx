@@ -214,7 +214,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                         <TableCell>
                           {new Date(claim.fecha_cita).toLocaleDateString("es-ES", { timeZone: "UTC" })}
                         </TableCell>
-                        <TableCell>{claim.hora_franja}</TableCell>
+                        <TableCell>{claim.hora_franja.slice(0,5)}</TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
                             <Button
@@ -337,7 +337,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                 label="Fecha de Cita"
                 value={new Date(selectedClaim.fecha_cita).toLocaleDateString("es-ES", { timeZone: "UTC" })}
               />
-              <DetailRow label="Hora / Franja" value={selectedClaim.hora_franja} />
+              <DetailRow label="Hora / Franja" value={selectedClaim.hora_franja.slice(0,5)} />
               <DetailRow label="Email" value={selectedClaim.email} />
               <DetailRow label="Teléfono" value={String(selectedClaim.telefono)} />
               <DetailRow label="Calendar Event ID" value={selectedClaim.calendar_event_id || "—"} />
