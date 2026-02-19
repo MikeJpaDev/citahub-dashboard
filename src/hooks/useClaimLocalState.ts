@@ -1,17 +1,13 @@
 import { useState, useCallback } from "react";
+import type { Claim } from "@/types/claim";
 
 export type ClaimStatus = "En Espera" | "En Proceso" | "Completado";
 
-interface ClaimLocalData {
-  numeroCita: string;
-  completado: boolean;
-}
+type CompletadoMap = Record<number, boolean>;
 
-type LocalStateMap = Record<number, ClaimLocalData>;
+const STORAGE_KEY = "claim_completado_state";
 
-const STORAGE_KEY = "claim_local_state";
-
-const loadFromStorage = (): LocalStateMap => {
+const loadFromStorage = (): CompletadoMap => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : {};
@@ -20,54 +16,31 @@ const loadFromStorage = (): LocalStateMap => {
   }
 };
 
-const saveToStorage = (map: LocalStateMap) => {
+const saveToStorage = (map: CompletadoMap) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
 };
 
-export const getClaimStatus = (data?: ClaimLocalData): ClaimStatus => {
-  if (!data) return "En Espera";
-  if (data.completado) return "Completado";
-  if (data.numeroCita.trim()) return "En Proceso";
+export const getClaimStatus = (claim: Claim, completado: boolean): ClaimStatus => {
+  if (completado) return "Completado";
+  if (claim.Numero_Cita && String(claim.Numero_Cita).trim()) return "En Proceso";
   return "En Espera";
 };
 
 export const useClaimLocalState = () => {
-  const [localState, setLocalState] = useState<LocalStateMap>(loadFromStorage);
-
-  const setNumeroCita = useCallback((claimId: number, value: string) => {
-    setLocalState((prev) => {
-      const next = {
-        ...prev,
-        [claimId]: {
-          numeroCita: value,
-          completado: prev[claimId]?.completado ?? false,
-        },
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, []);
+  const [completadoMap, setCompletadoMap] = useState<CompletadoMap>(loadFromStorage);
 
   const setCompletado = useCallback((claimId: number) => {
-    setLocalState((prev) => {
-      const next = {
-        ...prev,
-        [claimId]: {
-          numeroCita: prev[claimId]?.numeroCita ?? "",
-          completado: true,
-        },
-      };
+    setCompletadoMap((prev) => {
+      const next = { ...prev, [claimId]: true };
       saveToStorage(next);
       return next;
     });
   }, []);
 
-  const getData = useCallback(
-    (claimId: number): ClaimLocalData => {
-      return localState[claimId] ?? { numeroCita: "", completado: false };
-    },
-    [localState]
+  const isCompletado = useCallback(
+    (claimId: number) => completadoMap[claimId] ?? false,
+    [completadoMap]
   );
 
-  return { getData, setNumeroCita, setCompletado };
+  return { isCompletado, setCompletado };
 };

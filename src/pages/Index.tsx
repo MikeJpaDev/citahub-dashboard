@@ -48,9 +48,9 @@ const Index = () => {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
         (claim) =>
-          claim.nombre_titular.toLowerCase().includes(query) ||
+      claim.nombre_titular.toLowerCase().includes(query) ||
           claim.email.toLowerCase().includes(query) ||
-          claim.telefono.includes(query)
+          String(claim.telefono).includes(query)
       );
     }
 
