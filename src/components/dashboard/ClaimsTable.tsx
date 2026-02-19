@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
@@ -44,12 +45,18 @@ const statusConfig: Record<ClaimStatus, { label: string; className: string }> = 
   },
 };
 
+const BASE_URL = import.meta.env.VITE_BASE_URL_GUAJIRITOS as string;
+
 export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [resendingId, setResendingId] = useState<number | null>(null);
   const [completingId, setCompletingId] = useState<number | null>(null);
-  const { getData, setNumeroCita, setCompletado } = useClaimLocalState();
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  // Local editable values for Numero_Cita (optimistic)
+  const [localNumeroCita, setLocalNumeroCita] = useState<Record<number, string>>({});
+  const { isCompletado, setCompletado } = useClaimLocalState();
 
   const totalPages = Math.ceil(claims.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -60,11 +67,42 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
+  const getNumeroCita = (claim: Claim) => {
+    if (claim.id in localNumeroCita) return localNumeroCita[claim.id];
+    return claim.Numero_Cita ?? "";
+  };
+
+  const handleNumeroCitaBlur = async (claim: Claim, value: string) => {
+    const original = claim.Numero_Cita ?? "";
+    if (value === original) return;
+
+    setUpdatingId(claim.id);
+    try {
+      const response = await fetch(`${BASE_URL}/Claim/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: claim.id, Numero_Cita: value }),
+      });
+      if (!response.ok) throw new Error("Error al actualizar");
+      toast.success("Número de cita actualizado");
+      queryClient.invalidateQueries({ queryKey: ["claims"] });
+    } catch {
+      toast.error("Error al actualizar el número de cita");
+      // Revert local value
+      setLocalNumeroCita((prev) => {
+        const next = { ...prev };
+        delete next[claim.id];
+        return next;
+      });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleResendEmail = async (claim: Claim) => {
     setResendingId(claim.id);
     try {
-      const BASE_URL_GUAJIRITOS = import.meta.env.VITE_BASE_URL_GUAJIRITOS;
-      const response = await fetch(`${BASE_URL_GUAJIRITOS}/claim/report`, {
+      const response = await fetch(`${BASE_URL}/claim/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: String(claim.id) }),
@@ -79,14 +117,11 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
   };
 
   const handleComplete = async (claim: Claim) => {
-    const data = getData(claim.id);
-    const status = getClaimStatus(data);
-    if (status === "Completado") return;
+    if (isCompletado(claim.id)) return;
 
     setCompletingId(claim.id);
     try {
-      const BASE_URL_GUAJIRITOS = import.meta.env.VITE_BASE_URL_GUAJIRITOS;
-      const response = await fetch(`${BASE_URL_GUAJIRITOS}/claim/completed`, {
+      const response = await fetch(`${BASE_URL}/claim/completed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: String(claim.id) }),
@@ -119,24 +154,26 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                   <TableHead className="font-semibold">Servicio</TableHead>
                   <TableHead className="font-semibold">Fecha</TableHead>
                   <TableHead className="font-semibold">Hora</TableHead>
-                  <TableHead className="font-semibold">Email</TableHead>
-                  <TableHead className="font-semibold">Teléfono</TableHead>
                   <TableHead className="font-semibold text-center">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currentClaims.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No hay citas registradas
                     </TableCell>
                   </TableRow>
                 ) : (
                   currentClaims.map((claim) => {
-                    const localData = getData(claim.id);
-                    const status = getClaimStatus(localData);
+                    const completado = isCompletado(claim.id);
+                    const numeroCita = getNumeroCita(claim);
+                    const status = getClaimStatus(
+                      { ...claim, Numero_Cita: numeroCita || null },
+                      completado
+                    );
                     const { label, className } = statusConfig[status];
-                    const isCompleted = status === "Completado";
+                    const isUpdating = updatingId === claim.id;
 
                     return (
                       <TableRow key={claim.id} className="hover:bg-muted/30 transition-colors">
@@ -147,13 +184,27 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Input
-                            className="h-7 w-24 text-xs"
-                            placeholder="—"
-                            value={localData.numeroCita}
-                            disabled={isCompleted}
-                            onChange={(e) => setNumeroCita(claim.id, e.target.value)}
-                          />
+                          <div className="relative">
+                            <Input
+                              className="h-7 w-28 text-xs pr-6"
+                              placeholder="—"
+                              value={numeroCita}
+                              disabled={completado}
+                              onChange={(e) =>
+                                setLocalNumeroCita((prev) => ({
+                                  ...prev,
+                                  [claim.id]: e.target.value,
+                                }))
+                              }
+                              onBlur={(e) => handleNumeroCitaBlur(claim, e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                              }}
+                            />
+                            {isUpdating && (
+                              <Loader2 className="h-3 w-3 animate-spin absolute right-1.5 top-2 text-muted-foreground" />
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>{claim.nombre_titular}</TableCell>
                         <TableCell>
@@ -165,8 +216,6 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                           {new Date(claim.fecha_cita).toLocaleDateString("es-ES", { timeZone: "UTC" })}
                         </TableCell>
                         <TableCell>{claim.hora_franja}</TableCell>
-                        <TableCell className="text-muted-foreground">{claim.email}</TableCell>
-                        <TableCell className="text-muted-foreground">{claim.telefono}</TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
                             <Button
@@ -194,9 +243,9 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleComplete(claim)}
-                              disabled={isCompleted || completingId === claim.id}
-                              title={isCompleted ? "Ya completado" : "Marcar como completado"}
-                              className={isCompleted ? "text-green-600" : "hover:text-green-600"}
+                              disabled={completado || completingId === claim.id}
+                              title={completado ? "Ya completado" : "Marcar como completado"}
+                              className={completado ? "text-green-600" : "hover:text-green-600"}
                             >
                               {completingId === claim.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -275,27 +324,38 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
             <DialogTitle>Detalles de la Cita</DialogTitle>
             <DialogDescription>Información completa de la cita #{selectedClaim?.id}</DialogDescription>
           </DialogHeader>
-          {selectedClaim && (() => {
-            const localData = getData(selectedClaim.id);
-            const status = getClaimStatus(localData);
-            return (
-              <div className="grid gap-3 text-sm">
-                <DetailRow label="ID" value={String(selectedClaim.id)} />
-                <DetailRow label="Estado" value={status} />
-                <DetailRow label="Nº Cita" value={localData.numeroCita || "—"} />
-                <DetailRow label="Titular" value={selectedClaim.nombre_titular} />
-                <DetailRow label="Servicio" value={selectedClaim.servicio} />
-                <DetailRow label="Fecha de Cita" value={new Date(selectedClaim.fecha_cita).toLocaleDateString("es-ES", { timeZone: "UTC" })} />
-                <DetailRow label="Hora / Franja" value={selectedClaim.hora_franja} />
-                <DetailRow label="Email" value={selectedClaim.email} />
-                <DetailRow label="Teléfono" value={selectedClaim.telefono} />
-                <DetailRow label="Calendar Event ID" value={selectedClaim.calendar_event_id || "—"} />
-                <DetailRow label="Chat ID" value={selectedClaim.chat_id || "—"} />
-                <DetailRow label="Creado" value={selectedClaim.createdAt ? new Date(selectedClaim.createdAt).toLocaleString("es-ES") : "—"} />
-                <DetailRow label="Actualizado" value={selectedClaim.updatedAt ? new Date(selectedClaim.updatedAt).toLocaleString("es-ES") : "—"} />
-              </div>
-            );
-          })()}
+          {selectedClaim && (
+            <div className="grid gap-3 text-sm">
+              <DetailRow label="ID" value={String(selectedClaim.id)} />
+              <DetailRow
+                label="Estado"
+                value={getClaimStatus(
+                  { ...selectedClaim, Numero_Cita: getNumeroCita(selectedClaim) || null },
+                  isCompletado(selectedClaim.id)
+                )}
+              />
+              <DetailRow label="Nº Cita" value={getNumeroCita(selectedClaim) || "—"} />
+              <DetailRow label="Titular" value={selectedClaim.nombre_titular} />
+              <DetailRow label="Servicio" value={selectedClaim.servicio} />
+              <DetailRow
+                label="Fecha de Cita"
+                value={new Date(selectedClaim.fecha_cita).toLocaleDateString("es-ES", { timeZone: "UTC" })}
+              />
+              <DetailRow label="Hora / Franja" value={selectedClaim.hora_franja} />
+              <DetailRow label="Email" value={selectedClaim.email} />
+              <DetailRow label="Teléfono" value={String(selectedClaim.telefono)} />
+              <DetailRow label="Calendar Event ID" value={selectedClaim.calendar_event_id || "—"} />
+              <DetailRow label="Chat ID" value={String(selectedClaim.chat_id) || "—"} />
+              <DetailRow
+                label="Creado"
+                value={selectedClaim.createdAt ? new Date(selectedClaim.createdAt).toLocaleString("es-ES") : "—"}
+              />
+              <DetailRow
+                label="Actualizado"
+                value={selectedClaim.updatedAt ? new Date(selectedClaim.updatedAt).toLocaleString("es-ES") : "—"}
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>

@@ -4,10 +4,11 @@ export interface Claim {
   hora_franja: string;
   servicio: string;
   email: string;
-  telefono: string;
+  telefono: number | string;
   calendar_event_id: string;
-  chat_id: string;
+  chat_id: number | string;
   fecha_cita: string;
+  Numero_Cita: string | null;
   createdAt: string;
   updatedAt: string;
 }
