@@ -9,6 +9,7 @@ export interface Claim {
   chat_id: number | string;
   fecha_cita: string;
   Numero_Cita: string | null;
+  estado_cita : string;
   createdAt: string;
   updatedAt: string;
 }

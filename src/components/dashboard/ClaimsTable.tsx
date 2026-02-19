@@ -56,7 +56,6 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   // Local editable values for Numero_Cita (optimistic)
   const [localNumeroCita, setLocalNumeroCita] = useState<Record<number, string>>({});
-  const { isCompletado, setCompletado } = useClaimLocalState();
 
   const totalPages = Math.ceil(claims.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -78,10 +77,10 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
 
     setUpdatingId(claim.id);
     try {
-      const response = await fetch(`${BASE_URL}/Claim/update`, {
+      const response = await fetch(`${BASE_URL}/claim/update`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: claim.id, Numero_Cita: value }),
+        body: JSON.stringify({ id: claim.id, Numero_Cita: value , estado_cita: "En Proceso"}),
       });
       if (!response.ok) throw new Error("Error al actualizar");
       toast.success("Número de cita actualizado");
@@ -117,7 +116,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
   };
 
   const handleComplete = async (claim: Claim) => {
-    if (isCompletado(claim.id)) return;
+    if (claim.estado_cita === "Completado") return;
 
     setCompletingId(claim.id);
     try {
@@ -127,8 +126,8 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
         body: JSON.stringify({ id: String(claim.id) }),
       });
       if (!response.ok) throw new Error("Error en la petición");
-      setCompletado(claim.id);
       toast.success(`Servicio completado notificado a ${claim.email}`);
+      queryClient.invalidateQueries({ queryKey: ["claims"] });
     } catch {
       toast.error("Error al enviar la notificación de completado");
     } finally {
@@ -166,7 +165,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                   </TableRow>
                 ) : (
                   currentClaims.map((claim) => {
-                    const completado = isCompletado(claim.id);
+                    const completado = claim.estado_cita === "Completado";
                     const numeroCita = getNumeroCita(claim);
                     const status = getClaimStatus(
                       { ...claim, Numero_Cita: numeroCita || null },
@@ -243,7 +242,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleComplete(claim)}
-                              disabled={completado || completingId === claim.id}
+                              disabled={claim.estado_cita === "Completado" || !claim.Numero_Cita}
                               title={completado ? "Ya completado" : "Marcar como completado"}
                               className={completado ? "text-green-600" : "hover:text-green-600"}
                             >
@@ -329,10 +328,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps) => {
               <DetailRow label="ID" value={String(selectedClaim.id)} />
               <DetailRow
                 label="Estado"
-                value={getClaimStatus(
-                  { ...selectedClaim, Numero_Cita: getNumeroCita(selectedClaim) || null },
-                  isCompletado(selectedClaim.id)
-                )}
+                value={selectedClaim.estado_cita}
               />
               <DetailRow label="Nº Cita" value={getNumeroCita(selectedClaim) || "—"} />
               <DetailRow label="Titular" value={selectedClaim.nombre_titular} />
