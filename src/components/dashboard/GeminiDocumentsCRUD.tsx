@@ -79,7 +79,7 @@ export const GeminiDocumentsCRUD = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Documentos (Gemini File Search)
+            Documentos
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button

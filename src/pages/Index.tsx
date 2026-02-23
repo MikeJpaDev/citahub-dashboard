@@ -51,7 +51,8 @@ const Index = () => {
         (claim) =>
           claim.nombre_titular.toLowerCase().includes(query) ||
           claim.email.toLowerCase().includes(query) ||
-          String(claim.telefono).includes(query),
+          String(claim.telefono).includes(query) ||
+          String(claim.Numero_Cita).includes(query)
       );
     }
 
